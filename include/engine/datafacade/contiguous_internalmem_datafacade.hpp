@@ -885,6 +885,11 @@ class ContiguousInternalMemoryDataFacadeBase : public BaseDataFacade
         // TODO: can be moved to a data block indexed by GeometryID
         return edge_based_node_data.IsLeftHandDriving(id);
     }
+
+    std::vector<ManeuverOverride> GetOverridesThatStartAt(const NodeID edge_based_node_id)
+    {
+        // TODO: Implement me
+    }
 };
 
 template <typename AlgorithmT> class ContiguousInternalMemoryDataFacade;
