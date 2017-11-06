@@ -12,6 +12,7 @@
 #include "extractor/edge_based_node_segment.hpp"
 #include "extractor/guidance/turn_instruction.hpp"
 #include "extractor/guidance/turn_lane_types.hpp"
+#include "extractor/maneuver_override.hpp"
 #include "extractor/original_edge_data.hpp"
 #include "extractor/query_node.hpp"
 #include "extractor/travel_mode.hpp"
@@ -192,7 +193,7 @@ class BaseDataFacade
 
     virtual bool IsLeftHandDriving(const NodeID id) const = 0;
 
-    virtual std::vector<ManeuverOverride>
+    virtual std::vector<extractor::ManeuverOverride>
     GetOverridesThatStartAt(const NodeID edge_based_node_id) const = 0;
 };
 }

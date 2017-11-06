@@ -1,14 +1,14 @@
 #ifndef MANUEVER_OVERRIDE_HPP
 #define MANUEVER_OVERRIDE_HPP
 
-#include "guidance/turn_instruction.hpp";
-#include "util/typedefs.hpp";
+#include "guidance/turn_instruction.hpp"
+#include "util/typedefs.hpp"
 
 namespace osrm
 {
 namespace extractor
 {
-class ManeuverOverride
+struct ManeuverOverride
 {
     NodeID from_edge_based_node_id;
     NodeID to_edge_based_node_id;

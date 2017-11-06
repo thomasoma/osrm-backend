@@ -886,9 +886,12 @@ class ContiguousInternalMemoryDataFacadeBase : public BaseDataFacade
         return edge_based_node_data.IsLeftHandDriving(id);
     }
 
-    std::vector<ManeuverOverride> GetOverridesThatStartAt(const NodeID edge_based_node_id)
+    std::vector<extractor::ManeuverOverride>
+    GetOverridesThatStartAt(const NodeID edge_based_node_id) const override final
     {
         // TODO: Implement me
+        std::vector<extractor::ManeuverOverride> results;
+        return results;
     }
 };
 
