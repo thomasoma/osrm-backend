@@ -78,7 +78,6 @@ Feature: Maneuver tag support
         And the relations
             | type     | way:from | node:via | way:to | maneuver |
             | maneuver | ab       | b        | cd     | uturn    |
-            | maneuver | ab       | c        | cd     | suppress |
 
         When I route I should get
             | waypoints | route                         | turns                    |
