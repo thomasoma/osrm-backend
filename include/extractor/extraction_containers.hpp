@@ -63,6 +63,8 @@ class ExtractionContainers
     std::vector<ConditionalTurnRestriction> conditional_turn_restrictions;
     std::vector<TurnRestriction> unconditional_turn_restrictions;
 
+    std::vector<InputManeuverOverride> maneuver_overrides_list;
+
     ExtractionContainers();
 
     void PrepareData(ScriptingEnvironment &scripting_environment,

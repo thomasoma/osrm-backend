@@ -263,8 +263,8 @@ void ExtractionContainers::PrepareEdges(ScriptingEnvironment &scripting_environm
         {
             if (edge_iterator->result.osm_source_id < node_iterator->node_id)
             {
-                util::Log(logDEBUG) << "Found invalid node reference "
-                                    << edge_iterator->result.source;
+                util::Log(logDEBUG)
+                    << "Found invalid node reference " << edge_iterator->result.source;
                 edge_iterator->result.source = SPECIAL_NODEID;
                 ++edge_iterator;
                 continue;

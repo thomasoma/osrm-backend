@@ -7,6 +7,7 @@
 #include "extractor/extraction_way.hpp"
 #include "extractor/extractor_callbacks.hpp"
 #include "extractor/files.hpp"
+#include "extractor/maneuver_override_relation_parser.hpp"
 #include "extractor/node_based_graph_factory.hpp"
 #include "extractor/raster_source.hpp"
 #include "extractor/restriction_filter.hpp"
@@ -397,6 +398,8 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
         config.parse_conditionals,
         restrictions);
 
+    const ManeuverOverrideRelationParser maneuver_override_parser;
+
     // OSM data reader
     using SharedBuffer = std::shared_ptr<osmium::memory::Buffer>;
     struct ParsedBuffer
@@ -406,6 +409,7 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
         std::vector<std::pair<const osmium::Way &, ExtractionWay>> resulting_ways;
         std::vector<std::pair<const osmium::Relation &, ExtractionRelation>> resulting_relations;
         std::vector<InputConditionalTurnRestriction> resulting_restrictions;
+        std::vector<InputManeuverOverride> resulting_maneuver_overrides;
     };
 
     ExtractionRelationContainer relations;
@@ -447,10 +451,12 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
             parsed_buffer.buffer = buffer;
             scripting_environment.ProcessElements(*buffer,
                                                   restriction_parser,
+                                                  maneuver_override_parser,
                                                   relations,
                                                   parsed_buffer.resulting_nodes,
                                                   parsed_buffer.resulting_ways,
-                                                  parsed_buffer.resulting_restrictions);
+                                                  parsed_buffer.resulting_restrictions,
+                                                  parsed_buffer.resulting_maneuver_overrides);
             return parsed_buffer;
         });
 
@@ -458,6 +464,7 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
     unsigned number_of_nodes = 0;
     unsigned number_of_ways = 0;
     unsigned number_of_restrictions = 0;
+    unsigned number_of_maneuver_overrides = 0;
     tbb::filter_t<ParsedBuffer, void> buffer_storage(
         tbb::filter::serial_in_order, [&](const ParsedBuffer &parsed_buffer) {
 
@@ -478,6 +485,13 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
             {
                 extractor_callbacks->ProcessRestriction(result);
             }
+
+            number_of_maneuver_overrides = parsed_buffer.resulting_maneuver_overrides.size();
+            for (const auto &result : parsed_buffer.resulting_maneuver_overrides)
+            {
+                extractor_callbacks->ProcessManeuverOverride(result);
+            }
+
         });
 
     tbb::filter_t<SharedBuffer, std::shared_ptr<ExtractionRelationContainer>> buffer_relation_cache(

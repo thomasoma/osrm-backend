@@ -79,6 +79,11 @@ void ExtractorCallbacks::ProcessRestriction(const InputConditionalTurnRestrictio
     // util::Log() << restriction.toString();
 }
 
+void ExtractorCallbacks::ProcessManeuverOverride(const InputManeuverOverride &override)
+{
+    external_memory.maneuver_overrides_list.push_back(override);
+}
+
 /**
  * Takes the geometry contained in the ```input_way``` and the tags computed
  * by the lua profile inside ```parsed_way``` and computes all edge segments.

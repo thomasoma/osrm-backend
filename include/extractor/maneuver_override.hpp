@@ -8,6 +8,16 @@ namespace osrm
 {
 namespace extractor
 {
+
+struct InputManeuverOverride
+{
+    OSMWayID from;
+    OSMWayID to;
+    OSMNodeID via;
+    std::string type;
+    std::string direction;
+};
+
 struct ManeuverOverride
 {
     NodeID from_edge_based_node_id;
