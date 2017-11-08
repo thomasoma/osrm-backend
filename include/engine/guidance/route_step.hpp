@@ -59,6 +59,7 @@ inline IntermediateIntersection getInvalidIntersection()
 
 struct RouteStep
 {
+    NodeID from_id;
     unsigned name_id;
     std::string name;
     std::string ref;

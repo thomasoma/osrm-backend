@@ -22,7 +22,7 @@ struct ManeuverOverride
 {
     NodeID from_edge_based_node_id;
     NodeID to_edge_based_node_id;
-    OSMNodeID via_osm_node_id;
+    NodeID via_node_id;
     guidance::TurnType::Enum override_type;
     guidance::DirectionModifier::Enum direction;
 };

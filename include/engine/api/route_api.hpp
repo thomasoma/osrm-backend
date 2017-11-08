@@ -1,6 +1,7 @@
 #ifndef ENGINE_API_ROUTE_HPP
 #define ENGINE_API_ROUTE_HPP
 
+#include "extractor/maneuver_override.hpp"
 #include "engine/api/base_api.hpp"
 #include "engine/api/json_factory.hpp"
 #include "engine/api/route_parameters.hpp"
@@ -182,6 +183,65 @@ class RouteAPI : public BaseAPI
                                                               phantoms.source_phantom,
                                                               phantoms.target_phantom);
                 leg_geometry = guidance::resyncGeometry(std::move(leg_geometry), leg.steps);
+
+                // apply manual override relations
+                bool done = false;
+                for (auto current_step_it = leg.steps.begin(); current_step_it != leg.steps.end();
+                     ++current_step_it)
+                {
+                    const auto overrides =
+                        BaseAPI::facade.GetOverridesThatStartAt(current_step_it->from_id);
+                    if (overrides.empty())
+                        continue;
+                    for (const extractor::ManeuverOverride &maneuver_relation : overrides)
+                    {
+                        // check if the to member of the override relation is in the route
+                        std::size_t MAX_MANEUVER_DISTANCE = 5;
+                        auto max_steps_fwd = current_step_it + MAX_MANEUVER_DISTANCE;
+                        auto to_match = std::find_if(
+                            current_step_it, max_steps_fwd, [&maneuver_relation](const auto &step) {
+                                return step.from_id == maneuver_relation.to_edge_based_node_id;
+                            });
+                        if (to_match == max_steps_fwd)
+                            continue;
+
+                        // search for corresponding via_node in the subsequent geometries
+                        auto current_step_copy = current_step_it;
+                        for (; current_step_copy != max_steps_fwd; ++current_step_copy)
+                        {
+                            auto via_node_coords =
+                                BaseAPI::facade.GetCoordinateOfNode(maneuver_relation.via_node_id);
+                            // iterators over geometry of current step
+                            auto begin =
+                                leg_geometry.locations.begin() + current_step_copy->geometry_begin;
+                            auto end =
+                                leg_geometry.locations.end() + current_step_copy->geometry_end;
+                            auto via_match = std::find_if(begin, end, [&](const auto &location) {
+                                return location == via_node_coords;
+                            });
+                            if (via_match == end)
+                                continue;
+                            // found a match; this route makes the turn that the maneuver relation
+                            // wants to modify
+                            done = true;
+                            BOOST_ASSERT(maneuver_relation.override_type !=
+                                         extractor::guidance::TurnType::Invalid);
+                            current_step_it->maneuver.instruction.type =
+                                maneuver_relation.override_type;
+                            if (maneuver_relation.direction !=
+                                extractor::guidance::DirectionModifier::MaxDirectionModifier)
+                            {
+                                current_step_it->maneuver.instruction.direction_modifier =
+                                    maneuver_relation.direction;
+                            }
+                            break;
+                        }
+                        if (done)
+                            break;
+                    }
+                    if (done)
+                        break;
+                }
             }
 
             leg_geometries.push_back(std::move(leg_geometry));
