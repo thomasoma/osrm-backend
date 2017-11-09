@@ -12,7 +12,8 @@ namespace extractor
 
 RestrictionCompressor::RestrictionCompressor(
     std::vector<TurnRestriction> &restrictions,
-    std::vector<ConditionalTurnRestriction> &conditional_turn_restrictions)
+    std::vector<ConditionalTurnRestriction> &conditional_turn_restrictions,
+    std::vector<ManeuverOverride> &maneuver_overrides)
 {
     // add a node restriction ptr to the starts/ends maps, needs to be a reference!
     auto index = [&](auto &element) {
@@ -40,10 +41,23 @@ RestrictionCompressor::RestrictionCompressor(
     std::for_each(conditional_turn_restrictions.begin(),
                   conditional_turn_restrictions.end(),
                   index_starts_and_ends);
+
+    auto index_maneuver = [&](auto &element) {
+        maneuver_starts.insert(std::make_pair(element.from_node, &element));
+        maneuver_ends.insert(std::make_pair(element.to_node, &element));
+    };
+    // !needs to be reference, so we can get the correct address
+    const auto index_maneuver_starts_and_ends = [&](auto &maneuver) { index_maneuver(maneuver); };
+
+    std::for_each(
+        maneuver_overrides.begin(), maneuver_overrides.end(), index_maneuver_starts_and_ends);
 }
 
 void RestrictionCompressor::Compress(const NodeID from, const NodeID via, const NodeID to)
 {
+
+    // TODO: do this for maneuvers as well
+
     // extract all startptrs and move them from via to from.
     auto all_starts_range = starts.equal_range(via);
     std::vector<NodeRestriction *> start_ptrs;

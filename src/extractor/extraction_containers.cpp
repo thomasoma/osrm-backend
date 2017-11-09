@@ -1,9 +1,9 @@
 #include "extractor/extraction_containers.hpp"
 #include "extractor/extraction_segment.hpp"
 #include "extractor/extraction_way.hpp"
+#include "extractor/guidance/turn_instruction.hpp"
 #include "extractor/restriction.hpp"
 #include "extractor/serialization.hpp"
-#include "extractor/guidance/turn_instruction.hpp"
 
 #include "util/coordinate_calculation.hpp"
 
@@ -276,8 +276,8 @@ void ExtractionContainers::PrepareEdges(ScriptingEnvironment &scripting_environm
         {
             if (edge_iterator->result.osm_source_id < node_iterator->node_id)
             {
-                util::Log(logDEBUG)
-                    << "Found invalid node reference " << edge_iterator->result.source;
+                util::Log(logDEBUG) << "Found invalid node reference "
+                                    << edge_iterator->result.source;
                 edge_iterator->result.source = SPECIAL_NODEID;
                 ++edge_iterator;
                 continue;
@@ -664,12 +664,12 @@ void ExtractionContainers::WriteNodes(storage::io::FileWriter &file_out) const
     util::Log() << "Processed " << max_internal_node_id << " nodes";
 }
 
-void ExtractionContainers::PrepareManeuverOverrides() 
+void ExtractionContainers::PrepareManeuverOverrides()
 {
     std::unordered_map<OSMWayID, FirstAndLastSegmentOfWay> referenced_ways;
 
-       // prepare for extracting source/destination nodes for all restrictions
-       {
+    // prepare for extracting source/destination nodes for all restrictions
+    {
         util::UnbufferedLog log;
         log << "Collecting start/end information on " << external_maneuver_overrides_list.size()
             << " restrictions...";
@@ -678,11 +678,13 @@ void ExtractionContainers::PrepareManeuverOverrides()
         const auto mark_ids = [&](auto const &maneuver_override) {
             FirstAndLastSegmentOfWay dummy_segment{
                 MAX_OSM_WAYID, MAX_OSM_NODEID, MAX_OSM_NODEID, MAX_OSM_NODEID, MAX_OSM_NODEID};
-                referenced_ways[maneuver_override.from] = dummy_segment;
-                referenced_ways[maneuver_override.to] = dummy_segment;
+            referenced_ways[maneuver_override.from] = dummy_segment;
+            referenced_ways[maneuver_override.to] = dummy_segment;
         };
 
-        std::for_each(external_maneuver_overrides_list.begin(), external_maneuver_overrides_list.end(), mark_ids);
+        std::for_each(external_maneuver_overrides_list.begin(),
+                      external_maneuver_overrides_list.end(),
+                      mark_ids);
 
         const auto set_ids = [&](auto const &start_end) {
             auto itr = referenced_ways.find(start_end.way_id);
@@ -709,124 +711,137 @@ void ExtractionContainers::PrepareManeuverOverrides()
     // d -- e - ????????? - f -- g or
     // h -- i - ????????? - j -- a
     // (d,e) or (j,a) as entry-segment
-    auto const find_node_maneuver_override =
-    [&](auto const &segment, auto const &via_segment, auto const via_node) {
+    auto const find_node_maneuver_override = [&](
+        auto const &from_segment, auto const &to_segment, auto const via_node) {
         // In case of way-restrictions, via-node will be set to MAX_OSM_NODEID to signal that
         // the node is not present.
         // connected at the front of the segment
-        if (via_node == MAX_OSM_NODEID || segment.first_segment_source_id == via_node)
+        if (from_segment.first_segment_source_id == via_node)
         {
-            if (segment.first_segment_source_id == via_segment.first_segment_source_id)
+            if (from_segment.first_segment_source_id == to_segment.first_segment_source_id)
             {
-                return ManeuverOverride{to_internal(segment.first_segment_target_id),
-                                       to_internal(segment.first_segment_source_id),
-                                       to_internal(via_segment.first_segment_target_id),
-                                       guidance::TurnType::Invalid,
-                                       guidance::DirectionModifier::MaxDirectionModifier
-                                    };
+                return ManeuverOverride{to_internal(from_segment.first_segment_target_id),
+                                        to_internal(via_node),
+                                        to_internal(to_segment.first_segment_target_id),
+                                        guidance::TurnType::Invalid,
+                                        guidance::DirectionModifier::MaxDirectionModifier};
             }
-            else if (segment.first_segment_source_id == via_segment.last_segment_target_id)
+            else if (from_segment.first_segment_source_id == to_segment.last_segment_target_id)
             {
-                return ManeuverOverride{to_internal(segment.first_segment_target_id),
-                                       to_internal(segment.first_segment_source_id),
-                                       to_internal(via_segment.last_segment_source_id),
-                                       guidance::TurnType::Invalid,
-                                       guidance::DirectionModifier::MaxDirectionModifier};
+                return ManeuverOverride{to_internal(from_segment.first_segment_target_id),
+                                        to_internal(via_node),
+                                        to_internal(to_segment.last_segment_source_id),
+                                        guidance::TurnType::Invalid,
+                                        guidance::DirectionModifier::MaxDirectionModifier};
             }
         }
 
         // connected at the end of the segment
-        if (via_node == MAX_OSM_NODEID || segment.last_segment_target_id == via_node)
+        if (from_segment.last_segment_target_id == via_node)
         {
-            if (segment.last_segment_target_id == via_segment.first_segment_source_id)
+            if (from_segment.last_segment_target_id == to_segment.first_segment_source_id)
             {
-                return ManeuverOverride{to_internal(segment.last_segment_source_id),
-                                       to_internal(segment.last_segment_target_id),
-                                       to_internal(via_segment.first_segment_target_id),
-                                       guidance::TurnType::Invalid,
-                                       guidance::DirectionModifier::MaxDirectionModifier};
+                return ManeuverOverride{to_internal(from_segment.last_segment_source_id),
+                                        to_internal(via_node),
+                                        to_internal(to_segment.first_segment_target_id),
+                                        guidance::TurnType::Invalid,
+                                        guidance::DirectionModifier::MaxDirectionModifier};
             }
-            else if (segment.last_segment_target_id == via_segment.last_segment_target_id)
+            else if (from_segment.last_segment_target_id == to_segment.last_segment_target_id)
             {
-                return ManeuverOverride{to_internal(segment.last_segment_source_id),
-                                       to_internal(segment.last_segment_target_id),
-                                       to_internal(via_segment.last_segment_source_id),
-                                       guidance::TurnType::Invalid,
-                                       guidance::DirectionModifier::MaxDirectionModifier};
+                return ManeuverOverride{to_internal(from_segment.last_segment_source_id),
+                                        to_internal(via_node),
+                                        to_internal(to_segment.last_segment_source_id),
+                                        guidance::TurnType::Invalid,
+                                        guidance::DirectionModifier::MaxDirectionModifier};
             }
         }
 
         // unconnected
-        util::Log(logDEBUG) << "Restriction references unconnected way: " << segment.way_id;
-        return ManeuverOverride{SPECIAL_NODEID, SPECIAL_NODEID, SPECIAL_NODEID, guidance::TurnType::Invalid, guidance::DirectionModifier::MaxDirectionModifier};
+        util::Log(logDEBUG) << "Restriction references unconnected way: " << from_segment.way_id;
+        return ManeuverOverride{SPECIAL_NODEID,
+                                SPECIAL_NODEID,
+                                SPECIAL_NODEID,
+                                guidance::TurnType::Invalid,
+                                guidance::DirectionModifier::MaxDirectionModifier};
     };
 
     // translate the turn from one segment onto another into a node restriction (the ways can only
     // be connected at a single location)
-    auto const get_node_restriction_from_OSM_ids = [&](
-        auto const from_id, auto const to_id, const OSMNodeID via_node) {
-        auto const from_segment_itr = referenced_ways.find(from_id);
-        if (from_segment_itr->second.way_id != from_id)
-        {
-            util::Log(logDEBUG) << "Restriction references invalid way: " << from_id;
-            return ManeuverOverride{SPECIAL_NODEID, SPECIAL_NODEID, SPECIAL_NODEID, guidance::TurnType::Invalid, guidance::DirectionModifier::MaxDirectionModifier};
-        }
+    auto const get_maneuver_override_from_OSM_ids =
+        [&](const OSMWayID &from_id, const OSMWayID &to_id, const OSMNodeID via_node) {
+            auto const from_segment_itr = referenced_ways.find(from_id);
+            if (from_segment_itr->second.way_id != from_id)
+            {
+                util::Log(logDEBUG) << "Restriction references invalid way: " << from_id;
+                return ManeuverOverride{SPECIAL_NODEID,
+                                        SPECIAL_NODEID,
+                                        SPECIAL_NODEID,
+                                        guidance::TurnType::Invalid,
+                                        guidance::DirectionModifier::MaxDirectionModifier};
+            }
 
-        auto const to_segment_itr = referenced_ways.find(to_id);
-        if (to_segment_itr->second.way_id != to_id)
-        {
-            util::Log(logDEBUG) << "Restriction references invalid way: " << to_id;
-            return ManeuverOverride{SPECIAL_NODEID, SPECIAL_NODEID, SPECIAL_NODEID, guidance::TurnType::Invalid, guidance::DirectionModifier::MaxDirectionModifier};
-        }
-        return find_node_maneuver_override(from_segment_itr->second, to_segment_itr->second, via_node);
-    };
+            auto const to_segment_itr = referenced_ways.find(to_id);
+            if (to_segment_itr->second.way_id != to_id)
+            {
+                util::Log(logDEBUG) << "Restriction references invalid way: " << to_id;
+                return ManeuverOverride{SPECIAL_NODEID,
+                                        SPECIAL_NODEID,
+                                        SPECIAL_NODEID,
+                                        guidance::TurnType::Invalid,
+                                        guidance::DirectionModifier::MaxDirectionModifier};
+            }
+            return find_node_maneuver_override(
+                from_segment_itr->second, to_segment_itr->second, via_node);
+        };
 
-        // Transform an OSMRestriction (based on WayIDs) into an OSRM restriction (base on NodeIDs).
+    // Transform an OSMRestriction (based on WayIDs) into an OSRM restriction (base on NodeIDs).
     // Returns true on successful transformation, false in case of invalid references.
     // Based on the auto type deduction, this transfor handles both conditional and unconditional
     // turn restrictions.
     const auto transform = [&](const auto &external, auto &internal) {
-            auto const via_node = to_internal(external.via);
+        auto const via_node = to_internal(external.via);
 
-            // check if we were able to resolve all the involved ways
-            auto maneuver_override =
-                get_node_restriction_from_OSM_ids(external.from, external.to, external.via);
+        // check if we were able to resolve all the involved ways
+        auto maneuver_override =
+            get_maneuver_override_from_OSM_ids(external.from, external.to, external.via);
 
-            if (!maneuver_override.Valid())
-            {
-                return false;
-            }
+        if (!maneuver_override.Valid())
+        {
+            return false;
+        }
 
-            if (maneuver_override.via_node_id != via_node)
-            {
-                util::Log(logDEBUG) << "Maneuver override references invalid way: " << external.via;
-                return false;
-            }
+        if (maneuver_override.via_node_id != via_node)
+        {
+            util::Log(logDEBUG) << "Maneuver override references invalid way: " << external.via;
+            return false;
+        }
 
-            internal = std::move(maneuver_override);
-            return true;
+        internal = std::move(maneuver_override);
+        return true;
     };
 
-        // wrapper function to handle distinction between conditional and unconditional turn
+    // wrapper function to handle distinction between conditional and unconditional turn
     // restrictions
     const auto transform_into_internal_types =
-    [&](const InputManeuverOverride &external_maneuver_override) {
+        [&](const InputManeuverOverride &external_maneuver_override) {
             ManeuverOverride internal_maneuver_override;
             if (transform(external_maneuver_override, internal_maneuver_override))
                 internal_maneuver_overrides.push_back(std::move(internal_maneuver_override));
-    };
+        };
 
-// Transforming the restrictions into the dedicated internal types
-{
-    util::UnbufferedLog log;
-    log << "Collecting start/end information on " << external_maneuver_overrides_list.size()
-        << " maneuver overrides...";
-    TIMER_START(transform);
-    std::for_each(
-        external_maneuver_overrides_list.begin(), external_maneuver_overrides_list.end(), transform_into_internal_types);
-    TIMER_STOP(transform);
-    log << "ok, after " << TIMER_SEC(transform) << "s";
-}
+    // Transforming the restrictions into the dedicated internal types
+    {
+        util::UnbufferedLog log;
+        log << "Collecting start/end information on " << external_maneuver_overrides_list.size()
+            << " maneuver overrides...";
+        TIMER_START(transform);
+        std::for_each(external_maneuver_overrides_list.begin(),
+                      external_maneuver_overrides_list.end(),
+                      transform_into_internal_types);
+        TIMER_STOP(transform);
+        log << "ok, after " << TIMER_SEC(transform) << "s";
+    }
 }
 
 void ExtractionContainers::PrepareRestrictions()
@@ -899,6 +914,9 @@ void ExtractionContainers::PrepareRestrictions()
             // In case of way-restrictions, via-node will be set to MAX_OSM_NODEID to signal that
             // the node is not present.
             // connected at the front of the segment
+            // Turn restrictions are described as a restriction between the two segments closest to
+            // the shared via-node on the from and to ways. Graph compression will later renumber
+            // the from and to internal node IDs as nodes are plucked out of the node-based graph.
             if (via_node == MAX_OSM_NODEID || segment.first_segment_source_id == via_node)
             {
                 if (segment.first_segment_source_id == via_segment.first_segment_source_id)

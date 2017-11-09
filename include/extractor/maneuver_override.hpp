@@ -20,17 +20,20 @@ struct InputManeuverOverride
 
 struct ManeuverOverride
 {
-    NodeID from_edge_based_node_id;
-    NodeID to_edge_based_node_id;
-    NodeID via_node_id;
+    NodeID from_node; // initially the intneral OSM ID of the node before the turn, then later, the
+                      // edge_based_node_id of the turn
+    NodeID via_node_id; // node-based node ID
+    NodeID to_node; // initially the intneral OSM ID of the node before the turn, then later, the
+                    // edge_based_node_id of the turn
     guidance::TurnType::Enum override_type;
     guidance::DirectionModifier::Enum direction;
 
-       // check if all parts of the restriction reference an actual node
-       bool Valid() const
-       {
-           return from_edge_based_node_id != SPECIAL_NODEID && to_edge_based_node_id != SPECIAL_NODEID && via_node_id != SPECIAL_NODEID;
-       };
+    // check if all parts of the restriction reference an actual node
+    bool Valid() const
+    {
+        return from_node != SPECIAL_NODEID && to_node != SPECIAL_NODEID &&
+               via_node_id != SPECIAL_NODEID;
+    };
 };
 }
 }

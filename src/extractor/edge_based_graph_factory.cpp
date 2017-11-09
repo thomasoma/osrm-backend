@@ -759,6 +759,27 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                                 m_node_based_graph.GetTarget(turn.eid),
                                 m_number_of_edge_based_nodes);
 
+                            /***************************/
+
+                            /*
+                            boost::optional<ManeuverOverride> find_maneuver_for_edge =
+                                [&](NodeID from, NodeID via, NodeID to) { return boost::none; };
+
+                            // TODO: implement me
+                            auto maneuver_override =
+                                find_maneuver_for_edge(node_along_road_entering,
+                                                       node_at_center_of_intersection,
+                                                       m_node_based_graph.GetTarget(turn.eid));
+                                                       */
+
+                            boost::optional<ManeuverOverride> maneuver_override = boost::none;
+
+                            if (maneuver_override)
+                            {
+                                maneuver_override->from_node = nbe_to_ebn_mapping[incoming_edge];
+                                maneuver_override->to_node = target_id;
+                            }
+
                             { // scope to forget edge_with_data after
                                 const auto edge_with_data_and_condition =
                                     generate_edge(nbe_to_ebn_mapping[incoming_edge],

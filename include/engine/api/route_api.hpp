@@ -200,7 +200,7 @@ class RouteAPI : public BaseAPI
                         auto max_steps_fwd = current_step_it + MAX_MANEUVER_DISTANCE;
                         auto to_match = std::find_if(
                             current_step_it, max_steps_fwd, [&maneuver_relation](const auto &step) {
-                                return step.from_id == maneuver_relation.to_edge_based_node_id;
+                                return step.from_id == maneuver_relation.to_node;
                             });
                         if (to_match == max_steps_fwd)
                             continue;

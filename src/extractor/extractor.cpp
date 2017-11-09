@@ -196,7 +196,8 @@ int Extractor::run(ScriptingEnvironment &scripting_environment)
     guidance::LaneDescriptionMap turn_lane_map;
     std::vector<TurnRestriction> turn_restrictions;
     std::vector<ConditionalTurnRestriction> conditional_turn_restrictions;
-    std::tie(turn_lane_map, turn_restrictions, conditional_turn_restrictions) =
+    std::vector<ManeuverOverride> maneuver_overrides;
+    std::tie(turn_lane_map, turn_restrictions, conditional_turn_restrictions, maneuver_overrides) =
         ParseOSMData(scripting_environment, number_of_threads);
 
     // Transform the node-based graph that OSM is based on into an edge-based graph
@@ -216,7 +217,8 @@ int Extractor::run(ScriptingEnvironment &scripting_environment)
     NodeBasedGraphFactory node_based_graph_factory(config.GetPath(".osrm"),
                                                    scripting_environment,
                                                    turn_restrictions,
-                                                   conditional_turn_restrictions);
+                                                   conditional_turn_restrictions,
+                                                   maneuver_overrides);
 
     util::Log() << "Writing nodes for nodes-based and edges-based graphs ...";
     auto const &coordinates = node_based_graph_factory.GetCoordinates();
@@ -333,7 +335,8 @@ int Extractor::run(ScriptingEnvironment &scripting_environment)
 
 std::tuple<guidance::LaneDescriptionMap,
            std::vector<TurnRestriction>,
-           std::vector<ConditionalTurnRestriction>>
+           std::vector<ConditionalTurnRestriction>,
+           std::vector<ManeuverOverride>>
 Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
                         const unsigned number_of_threads)
 {
@@ -595,7 +598,8 @@ Extractor::ParseOSMData(ScriptingEnvironment &scripting_environment,
 
     return std::make_tuple(std::move(turn_lane_map),
                            std::move(extraction_containers.unconditional_turn_restrictions),
-                           std::move(extraction_containers.conditional_turn_restrictions));
+                           std::move(extraction_containers.conditional_turn_restrictions),
+                           std::move(extraction_containers.internal_maneuver_overrides));
 }
 
 void Extractor::FindComponents(unsigned number_of_edge_based_nodes,
