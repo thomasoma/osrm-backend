@@ -799,8 +799,6 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
 
                             buffer.continuous_data.push_back(
                                 std::get<0>(edge_with_data_and_condition));
-                            buffer.continuous_turn_data.push_back(
-                                std::get<1>(edge_with_data_and_condition));
                             if (std::get<2>(edge_with_data_and_condition))
                             {
                                 buffer.conditionals.push_back(
@@ -854,8 +852,6 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
 
                                     buffer.delayed_data.push_back(
                                         std::get<0>(edge_with_data_and_condition));
-                                    buffer.delayed_turn_data.push_back(
-                                        std::get<1>(edge_with_data_and_condition));
 
                                     if (std::get<2>(edge_with_data_and_condition))
                                     {
@@ -890,8 +886,6 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
 
                                     buffer.delayed_data.push_back(
                                         std::get<0>(edge_with_data_and_condition));
-                                    buffer.delayed_turn_data.push_back(
-                                        std::get<1>(edge_with_data_and_condition));
 
                                     if (std::get<2>(edge_with_data_and_condition))
                                     {
@@ -1044,15 +1038,8 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                                               turn,
                                               entry_class_id);
 
-                            buffer.continuous_data.push_back(
-                                std::get<0>(edge_with_data_and_condition));
                             buffer.continuous_turn_data.push_back(
                                 std::get<1>(edge_with_data_and_condition));
-                            if (std::get<2>(edge_with_data_and_condition))
-                            {
-                                buffer.conditionals.push_back(
-                                    *std::get<2>(edge_with_data_and_condition));
-                            }
                         }
 
                         // when turning off a a via-way turn restriction, we need to not only
@@ -1099,27 +1086,8 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                                                       turn,
                                                       entry_class_id);
 
-                                    buffer.delayed_data.push_back(
-                                        std::get<0>(edge_with_data_and_condition));
                                     buffer.delayed_turn_data.push_back(
                                         std::get<1>(edge_with_data_and_condition));
-                                    if (std::get<2>(edge_with_data_and_condition))
-                                    {
-                                        buffer.conditionals.push_back(
-                                            *std::get<2>(edge_with_data_and_condition));
-                                    }
-
-                                    // also add the conditions for the way
-                                    if (is_way_restricted && !restriction.condition.empty())
-                                    {
-                                        // add a new conditional for the edge we just created
-                                        buffer.conditionals.push_back(
-                                            {NodeID(from_id),
-                                             nbe_to_ebn_mapping[turn.eid],
-                                             {static_cast<std::uint64_t>(-1),
-                                              m_coordinates[node_at_center_of_intersection],
-                                              restriction.condition}});
-                                    }
                                 }
                                 else
                                 {
@@ -1134,16 +1102,8 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                                                       turn,
                                                       entry_class_id);
 
-                                    buffer.delayed_data.push_back(
-                                        std::get<0>(edge_with_data_and_condition));
                                     buffer.delayed_turn_data.push_back(
                                         std::get<1>(edge_with_data_and_condition));
-
-                                    if (std::get<2>(edge_with_data_and_condition))
-                                    {
-                                        buffer.conditionals.push_back(
-                                            *std::get<2>(edge_with_data_and_condition));
-                                    }
                                 }
                             }
                         }
