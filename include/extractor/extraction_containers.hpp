@@ -23,6 +23,7 @@ namespace extractor
 class ExtractionContainers
 {
     void PrepareNodes();
+    void PrepareManeuverOverrides();
     void PrepareRestrictions();
     void PrepareEdges(ScriptingEnvironment &scripting_environment);
 
@@ -63,7 +64,8 @@ class ExtractionContainers
     std::vector<ConditionalTurnRestriction> conditional_turn_restrictions;
     std::vector<TurnRestriction> unconditional_turn_restrictions;
 
-    std::vector<InputManeuverOverride> maneuver_overrides_list;
+    std::vector<InputManeuverOverride> external_maneuver_overrides_list;
+    std::vector<ManeuverOverride> internal_maneuver_overrides;
 
     ExtractionContainers();
 

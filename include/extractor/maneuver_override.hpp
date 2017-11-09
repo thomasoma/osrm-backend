@@ -25,6 +25,12 @@ struct ManeuverOverride
     NodeID via_node_id;
     guidance::TurnType::Enum override_type;
     guidance::DirectionModifier::Enum direction;
+
+       // check if all parts of the restriction reference an actual node
+       bool Valid() const
+       {
+           return from_edge_based_node_id != SPECIAL_NODEID && to_edge_based_node_id != SPECIAL_NODEID && via_node_id != SPECIAL_NODEID;
+       };
 };
 }
 }

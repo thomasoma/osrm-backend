@@ -81,7 +81,7 @@ void ExtractorCallbacks::ProcessRestriction(const InputConditionalTurnRestrictio
 
 void ExtractorCallbacks::ProcessManeuverOverride(const InputManeuverOverride &override)
 {
-    external_memory.maneuver_overrides_list.push_back(override);
+    external_memory.external_maneuver_overrides_list.push_back(override);
 }
 
 /**
